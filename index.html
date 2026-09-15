@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Verrücktes Labyrinth – API Dokumentation (REST & WebSocket)</title>
+<style>
+  :root {
+    --sw-green: #10b981;
+    --sw-green-bg: #ecfdf5;
+    --sw-green-border: #10b981;
+    --sw-blue: #3b82f6;
+    --sw-blue-bg: #eff6ff;
+    --sw-blue-border: #3b82f6;
+    --sw-purple: #8b5cf6;
+    --sw-purple-bg: #f5f3ff;
+    --sw-purple-border: #8b5cf6;
+    --sw-red: #ef4444;
+    --sw-red-bg: #fef2f2;
+    --sw-red-border: #ef4444;
+    --sw-orange: #f59e0b;
+    --sw-orange-bg: #fffbeb;
+    --sw-orange-border: #f59e0b;
+    --sw-cyan: #06b6d4;
+    --sw-cyan-bg: #ecfeff;
+    --sw-cyan-border: #06b6d4;
+
+    --bg: #f8fafc;
+    --card-bg: #ffffff;
+    --sidebar-bg: #0f172a;
+    --sidebar-border: #1e293b;
+    --sidebar-text: #94a3b8;
+    --sidebar-hover: #334155;
+    --sidebar-active: #38bdf8;
+    --text-main: #1e293b;
+    --text-muted: #64748b;
+    --code-bg: #1e293b;
+    --code-text: #e2e8f0;
+    --border-color: #e2e8f0;
+    --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-main);
+    background: var(--bg);
+    line-height: 1.5;
+    display: flex;
+    min-height: 100vh;
+  }
+
+  /* Mobile Top Bar */
+  .mobile-topbar {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--sidebar-bg);
+    color: #fff;
+    padding: 0 16px;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 1000;
+    border-bottom: 1px solid var(--sidebar-border);
+  }
+  .mobile-toggle-btn {
+    background: #1e293b;
+    border: 1px solid #334155;
+    color: #fff;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+
+  /* Sidebar */
+  #sidebar {
+    width: 320px;
+    background: var(--sidebar-bg);
+    color: var(--sidebar-text);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    flex-shrink: 0;
+    border-right: 1px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    z-index: 900;
+    transition: transform 0.25s ease-in-out;
+  }
+
+  .sidebar-header {
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid var(--sidebar-border);
+  }
+  .sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f8fafc;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .sidebar-badge {
+    background: #0284c7;
+    color: #fff;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .sidebar-search {
+    margin-top: 12px;
+    width: 100%;
+    padding: 8px 12px;
+    background: #020617;
+    border: 1px solid #334155;
+    border-radius: 6px;
+    color: #f8fafc;
+    font-size: 0.82rem;
+  }
+  .sidebar-search:focus {
+    outline: none;
+    border-color: var(--sidebar-active);
+  }
+
+  .sidebar-nav {
+    flex: 1;
+    padding: 14px 10px 40px;
+    overflow-y: auto;
+  }
+  .nav-group-title {
+    font-size: 0.68rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    padding: 14px 10px 6px;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 10px;
+    color: #cbd5e1;
+    text-decoration: none;
+    font-size: 0.83rem;
+    border-radius: 5px;
+    transition: background 0.15s, color 0.15s;
+    margin-bottom: 2px;
+  }
+  .nav-item:hover {
+    background: var(--sidebar-hover);
+    color: #fff;
+  }
+  .nav-item.active {
+    background: #0284c7;
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav-badge {
+    font-size: 0.65rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    padding: 2px 6px;
+    border-radius: 4px;
+    min-width: 48px;
+    text-align: center;
+    color: #fff;
+  }
+  .nb-post { background: var(--sw-green); }
+  .nb-get  { background: var(--sw-blue); }
+  .nb-put  { background: var(--sw-orange); }
+  .nb-del  { background: var(--sw-red); }
+  .nb-send { background: var(--sw-green); }
+  .nb-recv { background: var(--sw-blue); }
+  .nb-uni  { background: var(--sw-purple); }
+  .nb-err  { background: var(--sw-red); }
+  .nb-info { background: #475569; }
+
+  /* Main Content */
+  #main-content {
+    flex: 1;
+    padding: 28px 40px 80px;
+    max-width: 1240px;
+    margin: 0 auto;
+    overflow-x: hidden;
+  }
+
+  /* Header Banner */
+  .doc-header {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+  }
+  .doc-header h1 {
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .version-tag {
+    background: #10b981;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .header-desc {
+    margin-top: 8px;
+    font-size: 0.95rem;
+    color: var(--text-muted);
+  }
+  .standards-box {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 12px;
+    margin-top: 18px;
+  }
+  .std-card {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.83rem;
+  }
+  .std-card strong { color: #0284c7; }
+
+  /* Controls Row */
+  .controls-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 28px 0 14px;
+  }
+  .section-label {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .btn-toggle-all {
+    background: #fff;
+    border: 1px solid #cbd5e1;
+    color: #475569;
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .btn-toggle-all:hover {
+    background: #f1f5f9;
+    color: #0f172a;
+  }
+
+  /* Operation Block Accordion */
+  .opblock {
+    border-radius: 6px;
+    margin-bottom: 12px;
+    background: #fff;
+    border: 1px solid;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    overflow: hidden;
+  }
+  .opblock.post { border-color: var(--sw-green-border); }
+  .opblock.get  { border-color: var(--sw-blue-border); }
+  .opblock.put  { border-color: var(--sw-orange-border); }
+  .opblock.del  { border-color: var(--sw-red-border); }
+  .opblock.send { border-color: var(--sw-green-border); }
+  .opblock.recv { border-color: var(--sw-blue-border); }
+  .opblock.uni  { border-color: var(--sw-purple-border); }
+  .opblock.err  { border-color: var(--sw-red-border); }
+
+  .opblock-summary {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    cursor: pointer;
+    user-select: none;
+    gap: 14px;
+    transition: filter 0.15s;
+  }
+  .opblock.post .opblock-summary { background: var(--sw-green-bg); }
+  .opblock.get  .opblock-summary { background: var(--sw-blue-bg); }
+  .opblock.put  .opblock-summary { background: var(--sw-orange-bg); }
+  .opblock.del  .opblock-summary { background: var(--sw-red-bg); }
+  .opblock.send .opblock-summary { background: var(--sw-green-bg); }
+  .opblock.recv .opblock-summary { background: var(--sw-blue-bg); }
+  .opblock.uni  .opblock-summary { background: var(--sw-purple-bg); }
+  .opblock.err  .opblock-summary { background: var(--sw-red-bg); }
+  .opblock-summary:hover { filter: brightness(0.97); }
+
+  .op-badge {
+    font-size: 0.78rem;
+    font-weight: 800;
+    font-family: var(--font-mono);
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    min-width: 70px;
+    text-align: center;
+    letter-spacing: 0.05em;
+  }
+  .bg-post { background: var(--sw-green); }
+  .bg-get  { background: var(--sw-blue); }
+  .bg-put  { background: var(--sw-orange); }
+  .bg-del  { background: var(--sw-red); }
+  .bg-send { background: var(--sw-green); }
+  .bg-recv { background: var(--sw-blue); }
+  .bg-uni  { background: var(--sw-purple); }
+  .bg-err  { background: var(--sw-red); }
+
+  .op-title {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #0f172a;
+  }
+  .op-desc {
+    font-size: 0.84rem;
+    color: var(--text-muted);
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .op-chips {
+    display: flex;
+    gap: 6px;
+  }
+  .chip {
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    border: 1px solid;
+    white-space: nowrap;
+  }
+  .chip-rest  { background: #e0f2fe; color: #0369a1; border-color: #bae6fd; }
+  .chip-lobby { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+  .chip-turn  { background: #fef3c7; color: #b45309; border-color: #fde68a; }
+  .chip-bonus { background: #f3e8ff; color: #7e22ce; border-color: #e9d5ff; }
+  .chip-admin { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+  .chip-ai    { background: #ecfeff; color: #0e7490; border-color: #a5f3fc; }
+
+  .op-chevron {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    transition: transform 0.2s;
+  }
+  .opblock.open .op-chevron {
+    transform: rotate(90deg);
+  }
+
+  .opblock-body {
+    display: none;
+    padding: 16px 20px 22px;
+    background: #fff;
+    border-top: 1px solid #e2e8f0;
+  }
+  .opblock.open .opblock-body {
+    display: block;
+  }
+
+  .body-note {
+    background: #f8fafc;
+    border-left: 4px solid #0284c7;
+    padding: 10px 14px;
+    font-size: 0.84rem;
+    margin-bottom: 16px;
+    border-radius: 0 4px 4px 0;
+  }
+  .body-note.warn {
+    background: #fffbeb;
+    border-left-color: #d97706;
+  }
+  .body-note.danger {
+    background: #fef2f2;
+    border-left-color: #ef4444;
+  }
+
+  .param-title {
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #475569;
+    margin: 14px 0 8px;
+  }
+
+  .param-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.83rem;
+    margin-bottom: 14px;
+  }
+  .param-table th {
+    background: #f8fafc;
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-color);
+    color: #475569;
+    font-weight: 600;
+  }
+  .param-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: top;
+  }
+  .p-name {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    color: #0f172a;
+  }
+  .p-type {
+    font-family: var(--font-mono);
+    color: #7c3aed;
+    font-size: 0.78rem;
+  }
+  .p-req {
+    color: #ef4444;
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+  .p-opt {
+    color: #94a3b8;
+    font-size: 0.72rem;
+  }
+
+  .code-container {
+    position: relative;
+    background: var(--code-bg);
+    border-radius: 6px;
+    padding: 12px 14px;
+    overflow-x: auto;
+    margin-top: 6px;
+  }
+  .code-container pre {
+    margin: 0;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--code-text);
+  }
+  .btn-copy {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: #e2e8f0;
+    font-size: 0.72rem;
+    padding: 3px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .btn-copy:hover {
+    background: rgba(255,255,255,0.25);
+  }
+
+  .k { color: #60a5fa; }
+  .s { color: #34d399; }
+  .n { color: #fbbf24; }
+  .b { color: #f87171; }
+  .nl { color: #94a3b8; }
+
+  .response-tag-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-top: 14px;
+    font-size: 0.82rem;
+    flex-wrap: wrap;
+  }
+  .resp-pill {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: 0.75rem;
+    font-family: var(--font-mono);
+  }
+  .rp-ok { background: #dcfce7; color: #15803d; }
+  .rp-err { background: #fee2e2; color: #b91c1c; }
+  .rp-warn { background: #fef3c7; color: #b45309; }
+
+  /* Schemas Grid */
+  .schema-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin-top: 10px;
+  }
+  .schema-card {
+    background: #fff;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .schema-card-head {
+    background: #f8fafc;
+    padding: 8px 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .schema-card-body {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+  .enum-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .enum-val {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 900px) {
+    body { flex-direction: column; }
+    .mobile-topbar { display: flex; }
+    #sidebar {
+      position: fixed;
+      top: 56px;
+      left: 0;
+      width: 280px;
+      height: calc(100vh - 56px);
+      transform: translateX(-100%);
+      box-shadow: 4px 0 12px rgba(0,0,0,0.2);
+    }
+    #sidebar.mobile-open {
+      transform: translateX(0);
+    }
+    #main-content {
+      padding: 72px 16px 40px;
+    }
+    .opblock-summary {
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .op-desc {
+      width: 100%;
+      white-space: normal;
+    }
+  }
+
+  /* Print Styles for PDF Export */
+  @media print {
+    body {
+      background: #fff;
+      color: #000;
+      display: block;
+    }
+    #sidebar, .mobile-topbar, .btn-copy, .btn-toggle-all, .sidebar-search, .op-chevron {
+      display: none !important;
+    }
+    #main-content {
+      padding: 0;
+      max-width: 100%;
+      margin: 0;
+    }
+    .doc-header {
+      box-shadow: none;
+      border: 1px solid #cbd5e1;
+      page-break-after: avoid;
+    }
+    .opblock {
+      box-shadow: none;
+      border: 1px solid #cbd5e1 !important;
+      page-break-inside: avoid;
+      margin-bottom: 16px;
+    }
+    .opblock-body {
+      display: block !important;
+    }
+    .code-container {
+      background: #f8fafc;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+    .code-container pre {
+      color: #0f172a;
+    }
+    .k { color: #1d4ed8; font-weight: 700; }
+    .s { color: #047857; }
+    .n { color: #b45309; }
+    .b { color: #b91c1c; }
+    .nl { color: #475569; }
+    .opblock-summary {
+      background: #f1f5f9 !important;
+    }
+    .param-table th {
+      background: #e2e8f0;
+      color: #000;
+    }
+  }
+</style>
+</head>
+<body>
+
+<!-- Mobile Header -->
+<div class="mobile-topbar">
+  <div style="font-weight:800;font-size:1.05rem;">🎮 Labyrinth API</div>
+  <button class="mobile-toggle-btn" onclick="toggleMobileSidebar()">☰ Menü</button>
+</div>
+
+<!-- ==================== SIDEBAR ==================== -->
+<aside id="sidebar">
+  <div class="sidebar-header">
+    <div class="sidebar-title">
+      <span>🎮 Labyrinth API</span>
+      <span class="sidebar-badge">v2.0</span>
+    </div>
+    <input type="text" class="sidebar-search" id="filterInput" placeholder="Suchen (z.B. PUSH, BONUS)..." onkeyup="filterOps()"/>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-group-title">Überblick & Architektur</div>
+    <a href="#section-overview" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-info">INFO</span>Architektur & Standards</a>
+    <a href="#section-errors" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-err">FEHLER</span>ErrorCodes Enum</a>
+    <a href="#section-schemas" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-info">SCHEMA</span>Datenstrukturen & Enums</a>
+
+    <div class="nav-group-title">1. Verzeichnisserver (REST)</div>
+    <a href="#rest-register" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-post">POST</span>/api/servers</a>
+    <a href="#rest-list" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-get">GET</span>/api/servers</a>
+    <a href="#rest-heartbeat" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-put">PUT</span>/api/servers/{id}/heartbeat</a>
+    <a href="#rest-delete" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-del">DEL</span>/api/servers/{id}</a>
+
+    <div class="nav-group-title">2. Client → Server (Commands)</div>
+    <a href="#cmd-CONNECT" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>CONNECT</a>
+    <a href="#cmd-DISCONNECT" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>DISCONNECT</a>
+    <a href="#cmd-START_GAME" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>START_GAME</a>
+    <a href="#cmd-ROTATE_SPARE_TILE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>ROTATE_SPARE_TILE</a>
+    <a href="#cmd-PUSH_TILE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>PUSH_TILE</a>
+    <a href="#cmd-MOVE_FIGURE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>MOVE_FIGURE</a>
+    <a href="#cmd-PASS_MOVE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>PASS_MOVE</a>
+    <a href="#cmd-USE_BONUS" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>USE_BONUS</a>
+    <a href="#cmd-SET_AI_MODE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>SET_AI_MODE</a>
+    <a href="#cmd-REMATCH_REQUEST" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-send">SEND</span>REMATCH_REQUEST</a>
+
+    <div class="nav-group-title">3. Server → Client (Events)</div>
+    <a href="#evt-SERVER_INFO" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-uni">UNI</span>SERVER_INFO</a>
+    <a href="#evt-CONNECT_ACK" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-uni">UNI</span>CONNECT_ACK</a>
+    <a href="#evt-LOBBY_STATE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>LOBBY_STATE</a>
+    <a href="#evt-GAME_STARTED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>GAME_STARTED</a>
+    <a href="#evt-NEXT_TREASURE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-uni">UNI</span>NEXT_TREASURE</a>
+    <a href="#evt-GAME_STATE_UPDATE" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>GAME_STATE_UPDATE</a>
+    <a href="#evt-BONUS_SPAWNED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>BONUS_SPAWNED</a>
+    <a href="#evt-BONUS_COLLECTED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>BONUS_COLLECTED</a>
+    <a href="#evt-BONUS_USED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>BONUS_USED</a>
+    <a href="#evt-TREASURE_FOUND" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>TREASURE_FOUND</a>
+    <a href="#evt-PLAYER_UPDATED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>PLAYER_UPDATED</a>
+    <a href="#evt-ACHIEVEMENT_UNLOCKED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>ACHIEVEMENT_UNLOCKED</a>
+    <a href="#evt-TIMEOUT_WARNING" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>TIMEOUT_WARNING</a>
+    <a href="#evt-PLAYER_DISCONNECTED" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>PLAYER_DISCONNECTED</a>
+    <a href="#evt-GAME_OVER" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>GAME_OVER</a>
+    <a href="#evt-REMATCH_STATUS" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-recv">RECV</span>REMATCH_STATUS</a>
+    <a href="#evt-ERROR" class="nav-item" onclick="closeMobileNav()"><span class="nav-badge nb-err">FEHLER</span>ERROR</a>
+  </nav>
+</aside>
+
+<!-- ==================== MAIN CONTENT ==================== -->
+<main id="main-content">
+
+  <!-- Header Banner -->
+  <header class="doc-header" id="section-overview">
+    <div class="header-top">
+      <h1>Das Verrückte Labyrinth – Offizielle API <span class="version-tag">v2.0 Standard</span></h1>
+    </div>
+    <div class="header-desc">
+      Schnittstellendokumentation für den Verzeichnisserver (REST) und die verteilte Spielserver-Kommunikation (JSON-over-WebSocket).
+    </div>
+
+    <div class="standards-box">
+      <div class="std-card"><strong>Envelope-Format:</strong> Jede WebSocket-Nachricht nutzt strikt <code>{"type": "...", "data": {...}}</code>.</div>
+      <div class="std-card"><strong>Eingänge-Prinzip:</strong> Kacheln definieren Wege via <code>entrances: ["UP", "DOWN", "LEFT", "RIGHT"]</code>.</div>
+      <div class="std-card"><strong>Koordinaten:</strong> Ursprung <code>(0,0)</code> oben links. Feldnamen: <code>"row"</code> und <code>"column"</code>.</div>
+      <div class="std-card"><strong>Reconnect-Token:</strong> Bei <code>CONNECT_ACK</code> erhaltenes <code>identifierToken</code> ermöglicht 30s-Reconnect.</div>
+      <div class="std-card"><strong>Client-KI:</strong> KI-Logik rechnet rein clientseitig; Server trackt & loggt Status per <code>isAiControlled</code>.</div>
+      <div class="std-card"><strong>Siegbedingung:</strong> Alle Schätze finden + Rückkehr auf das <code>homePosition</code>-Startfeld.</div>
+    </div>
+  </header>
+
+  <!-- ==================== 1. VERZEICHNISSERVER (REST) ==================== -->
+  <div class="controls-row">
+    <div class="section-label">1. Verzeichnisserver (REST API)</div>
+    <button class="btn-toggle-all" onclick="toggleAll('group-rest')">Alle auf-/zuklappen</button>
+  </div>
+  <div id="group-rest">
+
+    <!-- POST /api/servers -->
+    <div class="opblock post" id="rest-register">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-post">POST</span>
+        <span class="op-title">/api/servers</span>
+        <span class="op-desc">Spielserver beim Verzeichnisserver registrieren</span>
+        <div class="op-chips"><span class="chip chip-rest">REST</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Wird vom Spielserver beim Hochfahren aufgerufen, damit Clients ihn finden können.</div>
+        <div class="param-title">Request Body</div>
+        <table class="param-table">
+          <thead><tr><th>Feld</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">name</td><td class="p-type">string</td><td class="p-req">ja</td><td>Name des Spielraums (z. B. "MCI Labyrinth Server 1")</td></tr>
+            <tr><td class="p-name">host</td><td class="p-type">string</td><td class="p-req">ja</td><td>IP-Adresse oder Domain des Spielservers</td></tr>
+            <tr><td class="p-name">port</td><td class="p-type">integer</td><td class="p-req">ja</td><td>Port des WebSocket-Servers (z. B. 9000)</td></tr>
+            <tr><td class="p-name">maxPlayers</td><td class="p-type">integer</td><td class="p-req">ja</td><td>Maximale Spieler (2–4)</td></tr>
+            <tr><td class="p-name">boardSize</td><td class="p-type">object</td><td class="p-opt">optional</td><td><code>{"rows": 7, "cols": 7}</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="param-title">Beispiel Request</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"name"</span>: <span class="s">"MCI Arena #1"</span>,
+  <span class="k">"host"</span>: <span class="s">"192.168.1.100"</span>,
+  <span class="k">"port"</span>: <span class="n">9000</span>,
+  <span class="k">"maxPlayers"</span>: <span class="n">4</span>,
+  <span class="k">"boardSize"</span>: { <span class="k">"rows"</span>: <span class="n">7</span>, <span class="k">"cols"</span>: <span class="n">7</span> }
+}</pre>
+        </div>
+
+        <div class="response-tag-row">
+          <strong>Antworten:</strong>
+          <span class="resp-pill rp-ok">201 Created: { "serverId": "srv-44a1", "heartbeatIntervalSeconds": 10 }</span>
+          <span class="resp-pill rp-err">400 Bad Request: { "error": "INVALID_CONFIG" }</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- GET /api/servers -->
+    <div class="opblock get" id="rest-list">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-get">GET</span>
+        <span class="op-title">/api/servers</span>
+        <span class="op-desc">Liste aller verfügbaren Spielserver abrufen</span>
+        <div class="op-chips"><span class="chip chip-rest">REST</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Wird vom Client beim Programmstart aufgerufen, um aktive Partien zur Auswahl anzuzeigen.</div>
+        <div class="param-title">Query Parameter</div>
+        <table class="param-table">
+          <thead><tr><th>Parameter</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">status</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Filter nach Status: <code>LOBBY</code> oder <code>RUNNING</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="param-title">Beispiel Response (200 OK)</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>[
+  {
+    <span class="k">"serverId"</span>: <span class="s">"srv-44a1"</span>,
+    <span class="k">"name"</span>: <span class="s">"MCI Arena #1"</span>,
+    <span class="k">"host"</span>: <span class="s">"192.168.1.100"</span>,
+    <span class="k">"port"</span>: <span class="n">9000</span>,
+    <span class="k">"currentPlayers"</span>: <span class="n">2</span>,
+    <span class="k">"maxPlayers"</span>: <span class="n">4</span>,
+    <span class="k">"status"</span>: <span class="s">"LOBBY"</span>
+  }
+]</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- PUT /api/servers/{id}/heartbeat -->
+    <div class="opblock put" id="rest-heartbeat">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-put">PUT</span>
+        <span class="op-title">/api/servers/{id}/heartbeat</span>
+        <span class="op-desc">Lebenszeichen & Spielerstand des Servers aktualisieren</span>
+        <div class="op-chips"><span class="chip chip-rest">REST</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Server senden diesen Request alle 10 Sekunden. Bleibt der Heartbeat aus, wird der Server nach 30s automatisch entfernt.</div>
+        <div class="param-title">Request Body</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"status"</span>: <span class="s">"RUNNING"</span>,
+  <span class="k">"currentPlayers"</span>: <span class="n">3</span>
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Antworten:</strong>
+          <span class="resp-pill rp-ok">200 OK: { "acknowledged": true }</span>
+          <span class="resp-pill rp-err">404 Not Found: { "error": "SERVER_NOT_FOUND" }</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DELETE /api/servers/{id} -->
+    <div class="opblock del" id="rest-delete">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-del">DELETE</span>
+        <span class="op-title">/api/servers/{id}</span>
+        <span class="op-desc">Spielserver sauber aus Verzeichnis austragen</span>
+        <div class="op-chips"><span class="chip chip-rest">REST</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Wird beim Herunterfahren des Spielservers aufgerufen.</div>
+        <div class="response-tag-row">
+          <strong>Antworten:</strong>
+          <span class="resp-pill rp-ok">204 No Content</span>
+          <span class="resp-pill rp-err">404 Not Found</span>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- /group-rest -->
+
+
+  <!-- ==================== 2. CLIENT -> SERVER (COMMANDS) ==================== -->
+  <div class="controls-row" style="margin-top: 36px;">
+    <div class="section-label">2. Client → Server (Commands)</div>
+    <button class="btn-toggle-all" onclick="toggleAll('group-commands')">Alle auf-/zuklappen</button>
+  </div>
+  <div id="group-commands">
+
+    <!-- CONNECT -->
+    <div class="opblock send" id="cmd-CONNECT">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">CONNECT</span>
+        <span class="op-desc">Lobby beitreten oder bestehende Spielsession wiederaufnehmen</span>
+        <div class="op-chips"><span class="chip chip-lobby">LOBBY</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Muss innerhalb von 10s nach WebSocket-Verbindung gesendet werden. Bei Reconnect wird das zuvor erhaltene <code>identifierToken</code> mitgesendet.</div>
+        <div class="param-title">Data-Felder</div>
+        <table class="param-table">
+          <thead><tr><th>Feld</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">username</td><td class="p-type">string</td><td class="p-req">ja</td><td>Spielername (1–50 Zeichen)</td></tr>
+            <tr><td class="p-name">identifierToken</td><td class="p-type">string</td><td class="p-opt">optional</td><td>Reconnect-Token für Wiederverbindung</td></tr>
+          </tbody>
+        </table>
+
+        <div class="param-title">Beispiel – Erstverbindung</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"CONNECT"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"username"</span>: <span class="s">"Alice"</span>
+  }
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Events:</strong>
+          <span class="resp-pill rp-ok">CONNECT_ACK (Unicast)</span>
+          <span class="resp-pill rp-ok">LOBBY_STATE (Broadcast)</span>
+          <span class="resp-pill rp-err">ERROR (LOBBY_FULL, USERNAME_TAKEN)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- DISCONNECT -->
+    <div class="opblock send" id="cmd-DISCONNECT">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">DISCONNECT</span>
+        <span class="op-desc">Verbindung zur Lobby oder laufenden Partie sauber beenden</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"DISCONNECT"</span>,
+  <span class="k">"data"</span>: {}
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- START_GAME -->
+    <div class="opblock send" id="cmd-START_GAME">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">START_GAME</span>
+        <span class="op-desc">Spiel starten & konfigurieren (nur Admin/Spielleiter, min. 2 Spieler)</span>
+        <div class="op-chips"><span class="chip chip-admin">ADMIN</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <table class="param-table">
+          <thead><tr><th>Feld</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">boardSize</td><td class="p-type">object</td><td class="p-req">ja</td><td><code>{"rows": 7, "cols": 7}</code> (ungerade Zahlen 3–11)</td></tr>
+            <tr><td class="p-name">treasureCardCount</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Schatzkarten pro Spieler (Standard: 6, max: (rows*cols-4)/players)</td></tr>
+            <tr><td class="p-name">gameDurationInSeconds</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Spielzeitlimit (0 = unbegrenzt, Standard: 3600)</td></tr>
+            <tr><td class="p-name">totalBonusCount</td><td class="p-type">integer</td><td class="p-opt">optional</td><td>Gesamtzahl Boni im Spiel (0–20, Standard: 4)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"START_GAME"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"boardSize"</span>: { <span class="k">"rows"</span>: <span class="n">7</span>, <span class="k">"cols"</span>: <span class="n">7</span> },
+    <span class="k">"treasureCardCount"</span>: <span class="n">6</span>,
+    <span class="k">"gameDurationInSeconds"</span>: <span class="n">1800</span>,
+    <span class="k">"totalBonusCount"</span>: <span class="n">4</span>
+  }
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Events:</strong>
+          <span class="resp-pill rp-ok">GAME_STARTED (Broadcast)</span>
+          <span class="resp-pill rp-ok">NEXT_TREASURE (Unicast pro Spieler)</span>
+          <span class="resp-pill rp-err">ERROR (NOT_ADMIN, NOT_ENOUGH_PLAYERS)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ROTATE_SPARE_TILE -->
+    <div class="opblock send" id="cmd-ROTATE_SPARE_TILE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">ROTATE_SPARE_TILE</span>
+        <span class="op-desc">Ersatzkachel um 90° im Uhrzeigersinn drehen</span>
+        <div class="op-chips"><span class="chip chip-turn">WAITING_FOR_PUSH</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Nur erlaubt, wenn der Spieler am Zug ist und in Phase <code>WAITING_FOR_PUSH</code>. Rotiert die Eingänge der Kachel (z. B. <code>["UP", "RIGHT"]</code> $\to$ <code>["RIGHT", "DOWN"]</code>).</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"ROTATE_SPARE_TILE"</span>,
+  <span class="k">"data"</span>: {}
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Events:</strong>
+          <span class="resp-pill rp-ok">GAME_STATE_UPDATE (mit aktualisierter spareTile)</span>
+          <span class="resp-pill rp-err">ERROR (NOT_YOUR_TURN, INVALID_ACTION)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PUSH_TILE -->
+    <div class="opblock send" id="cmd-PUSH_TILE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">PUSH_TILE</span>
+        <span class="op-desc">Ersatzkachel in eine Zeile oder Spalte einschieben</span>
+        <div class="op-chips"><span class="chip chip-turn">WAITING_FOR_PUSH</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note warn">
+          <strong>Regeln beim Schieben:</strong><br>
+          1. <code>rowOrColIndex</code> darf regulär nur <strong>ungerade</strong> sein (1, 3, 5 bei 7x7).<br>
+          2. <strong>Rückschiebe-Verbot:</strong> Das direkte Rückgängigmachen des Vorzugs (z. B. Vorher: Row 1 RIGHT $\to$ Verboten: Row 1 LEFT) ist ungültig!
+        </div>
+        <table class="param-table">
+          <thead><tr><th>Feld</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">rowOrColIndex</td><td class="p-type">integer</td><td class="p-req">ja</td><td>Zeilenindex (bei LEFT/RIGHT) oder Spaltenindex (bei UP/DOWN)</td></tr>
+            <tr><td class="p-name">direction</td><td class="p-type">Direction</td><td class="p-req">ja</td><td><code>"UP"</code>, <code>"DOWN"</code>, <code>"LEFT"</code>, <code>"RIGHT"</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"PUSH_TILE"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"rowOrColIndex"</span>: <span class="n">1</span>,
+    <span class="k">"direction"</span>: <span class="s">"RIGHT"</span>
+  }
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Events:</strong>
+          <span class="resp-pill rp-ok">GAME_STATE_UPDATE (state wechselt auf WAITING_FOR_MOVE)</span>
+          <span class="resp-pill rp-err">ERROR (INVALID_PUSH, NOT_YOUR_TURN)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVE_FIGURE -->
+    <div class="opblock send" id="cmd-MOVE_FIGURE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">MOVE_FIGURE</span>
+        <span class="op-desc">Spielfigur entlang zusammenhängender Gänge ziehen</span>
+        <div class="op-chips"><span class="chip chip-turn">WAITING_FOR_MOVE</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">
+          <strong>Regeln beim Ziehen:</strong> Zielfeld muss über offene Pfade erreichbar sein. Beim Laufen darf über andere Figuren hinweggezogen werden. Zwei Figuren dürfen nie auf demselben Feld stehen bleiben!
+        </div>
+        <table class="param-table">
+          <thead><tr><th>Feld</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">targetCoordinates</td><td class="p-type">Coordinates</td><td class="p-req">ja</td><td><code>{"row": 3, "column": 4}</code></td></tr>
+          </tbody>
+        </table>
+
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"MOVE_FIGURE"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"targetCoordinates"</span>: { <span class="k">"row"</span>: <span class="n">3</span>, <span class="k">"column"</span>: <span class="n">4</span> }
+  }
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Events:</strong>
+          <span class="resp-pill rp-ok">GAME_STATE_UPDATE (Nächster Spieler ist dran)</span>
+          <span class="resp-pill rp-ok">TREASURE_FOUND (falls Schatzfeld erreicht)</span>
+          <span class="resp-pill rp-ok">BONUS_COLLECTED (falls Bonusfeld betreten)</span>
+          <span class="resp-pill rp-err">ERROR (INVALID_MOVE, POSITION_OCCUPIED)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PASS_MOVE -->
+    <div class="opblock send" id="cmd-PASS_MOVE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">PASS_MOVE</span>
+        <span class="op-desc">Figur nicht bewegen (stehenbleiben) und Zug beenden</span>
+        <div class="op-chips"><span class="chip chip-turn">WAITING_FOR_MOVE</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"PASS_MOVE"</span>,
+  <span class="k">"data"</span>: {}
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- USE_BONUS -->
+    <div class="opblock send" id="cmd-USE_BONUS">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">USE_BONUS</span>
+        <span class="op-desc">Gesammelten Bonus aus dem Inventar aktivieren</span>
+        <div class="op-chips"><span class="chip chip-bonus">BONUS</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Der Bonus muss im Inventar (<code>availableBonuses</code>) vorhanden sein. Jeder Bonus ist genau 1x nutzbar.</div>
+        <table class="param-table">
+          <thead><tr><th>Feld</th><th>Typ</th><th>Pflicht</th><th>Beschreibung</th></tr></thead>
+          <tbody>
+            <tr><td class="p-name">bonusType</td><td class="p-type">BonusType</td><td class="p-req">ja</td><td><code>"BEAM"</code>, <code>"SWAP"</code>, <code>"PUSH_FIXED"</code>, <code>"PUSH_TWICE"</code></td></tr>
+            <tr><td class="p-name">params</td><td class="p-type">object</td><td class="p-req">ja</td><td>Spezifische Aktionsparameter nach Typ (siehe Beispiele)</td></tr>
+          </tbody>
+        </table>
+
+        <div class="param-title">Beispiele nach BonusType</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre><span class="nl">// 1. BEAM: Figur auf beliebiges freies Feld teleportieren</span>
+{
+  <span class="k">"type"</span>: <span class="s">"USE_BONUS"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"bonusType"</span>: <span class="s">"BEAM"</span>,
+    <span class="k">"params"</span>: { <span class="k">"targetCoordinates"</span>: { <span class="k">"row"</span>: <span class="n">5</span>, <span class="k">"column"</span>: <span class="n">2</span> } }
+  }
+}
+
+<span class="nl">// 2. SWAP: Eigene Figur mit anderer Figur tauschen</span>
+{
+  <span class="k">"type"</span>: <span class="s">"USE_BONUS"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"bonusType"</span>: <span class="s">"SWAP"</span>,
+    <span class="k">"params"</span>: { <span class="k">"targetPlayerId"</span>: <span class="s">"p-9812"</span> }
+  }
+}
+
+<span class="nl">// 3. PUSH_FIXED: Einmalig feste (gerade) Reihe schieben (außer Rand 0 und max)</span>
+{
+  <span class="k">"type"</span>: <span class="s">"USE_BONUS"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"bonusType"</span>: <span class="s">"PUSH_FIXED"</span>,
+    <span class="k">"params"</span>: { <span class="k">"rowOrColIndex"</span>: <span class="n">2</span>, <span class="k">"direction"</span>: <span class="s">"DOWN"</span> }
+  }
+}
+
+<span class="nl">// 4. PUSH_TWICE: Zweites Mal schieben (setzt Phase von WAITING_FOR_MOVE auf WAITING_FOR_PUSH)</span>
+{
+  <span class="k">"type"</span>: <span class="s">"USE_BONUS"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"bonusType"</span>: <span class="s">"PUSH_TWICE"</span>,
+    <span class="k">"params"</span>: {}
+  }
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Events:</strong>
+          <span class="resp-pill rp-ok">BONUS_USED (Broadcast)</span>
+          <span class="resp-pill rp-ok">GAME_STATE_UPDATE</span>
+          <span class="resp-pill rp-err">ERROR (BONUS_NOT_AVAILABLE, INVALID_BONUS_TARGET)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- SET_AI_MODE -->
+    <div class="opblock send" id="cmd-SET_AI_MODE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">SET_AI_MODE</span>
+        <span class="op-desc">Server über Aktivierung/Deaktivierung der Client-KI informieren</span>
+        <div class="op-chips"><span class="chip chip-ai">CLIENT-KI</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Die KI wird vollständig im Client gerechnet. Der Server führt keine Züge aus, sondern loggt den Status mit und setzt <code>isAiControlled</code> im Spielerprofil.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"SET_AI_MODE"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"enabled"</span>: <span class="b">true</span>
+  }
+}</pre>
+        </div>
+        <div class="response-tag-row">
+          <strong>Folge-Event:</strong>
+          <span class="resp-pill rp-ok">PLAYER_UPDATED (Broadcast)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- REMATCH_REQUEST -->
+    <div class="opblock send" id="cmd-REMATCH_REQUEST">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-send">SEND</span>
+        <span class="op-title">REMATCH_REQUEST</span>
+        <span class="op-desc">Nach Spielende Zusage für die nächste Runde abgeben</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Vorherige Spieler haben Vorrang. Nach Ablauf eines Timeouts (15s) wird die Lobby für externe Neuanmeldungen geöffnet.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"REMATCH_REQUEST"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"ready"</span>: <span class="b">true</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- /group-commands -->
+
+
+  <!-- ==================== 3. SERVER -> CLIENT (EVENTS) ==================== -->
+  <div class="controls-row" style="margin-top: 36px;">
+    <div class="section-label">3. Server → Client (Events & Antworten)</div>
+    <button class="btn-toggle-all" onclick="toggleAll('group-events')">Alle auf-/zuklappen</button>
+  </div>
+  <div id="group-events">
+
+    <!-- SERVER_INFO -->
+    <div class="opblock uni" id="evt-SERVER_INFO">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-uni">UNICAST</span>
+        <span class="op-title">SERVER_INFO</span>
+        <span class="op-desc">Sofort nach TCP/WebSocket-Handshake – signalisiert Empfangsbereitschaft</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"SERVER_INFO"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"serverVersion"</span>: <span class="s">"2.0.0"</span>,
+    <span class="k">"serverTime"</span>: <span class="s">"2026-09-15T18:00:00Z"</span>,
+    <span class="k">"motd"</span>: <span class="s">"Willkommen am MCI Labyrinth Server!"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONNECT_ACK -->
+    <div class="opblock uni" id="evt-CONNECT_ACK">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-uni">UNICAST</span>
+        <span class="op-title">CONNECT_ACK</span>
+        <span class="op-desc">Bestätigung der Verbindung mit ID, Farbe und Reconnect-Token</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note warn"><strong>WICHTIG:</strong> Das <code>identifierToken</code> muss vom Client gespeichert werden, um nach Verbindungsabbrüchen reconnecten zu können.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"CONNECT_ACK"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"username"</span>: <span class="s">"Alice"</span>,
+    <span class="k">"playerColor"</span>: <span class="s">"RED"</span>,
+    <span class="k">"isAdmin"</span>: <span class="b">true</span>,
+    <span class="k">"identifierToken"</span>: <span class="s">"token-98f2-4bc1-912a"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOBBY_STATE -->
+    <div class="opblock recv" id="evt-LOBBY_STATE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">LOBBY_STATE</span>
+        <span class="op-desc">Aktuelle Teilnehmerliste in der Lobby</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"LOBBY_STATE"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"players"</span>: [
+      {
+        <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+        <span class="k">"username"</span>: <span class="s">"Alice"</span>,
+        <span class="k">"playerColor"</span>: <span class="s">"RED"</span>,
+        <span class="k">"isAdmin"</span>: <span class="b">true</span>,
+        <span class="k">"isAiControlled"</span>: <span class="b">false</span>,
+        <span class="k">"isConnected"</span>: <span class="b">true</span>
+      },
+      {
+        <span class="k">"playerId"</span>: <span class="s">"p-102"</span>,
+        <span class="k">"username"</span>: <span class="s">"Bob"</span>,
+        <span class="k">"playerColor"</span>: <span class="s">"BLUE"</span>,
+        <span class="k">"isAdmin"</span>: <span class="b">false</span>,
+        <span class="k">"isAiControlled"</span>: <span class="b">false</span>,
+        <span class="k">"isConnected"</span>: <span class="b">true</span>
+      }
+    ],
+    <span class="k">"canStart"</span>: <span class="b">true</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME_STARTED -->
+    <div class="opblock recv" id="evt-GAME_STARTED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">GAME_STARTED</span>
+        <span class="op-desc">Initialer Aufbau des Spielfelds zum Start der Partie</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Überträgt das gesamte Spielfeld mit Eingängen (<code>entrances</code>) pro Kachel und das freie Plättchen. Direkt im Anschluss erhält jeder Spieler per Unicast sein <code>NEXT_TREASURE</code>.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"GAME_STARTED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"rows"</span>: <span class="n">7</span>,
+    <span class="k">"cols"</span>: <span class="n">7</span>,
+    <span class="k">"gameEndTime"</span>: <span class="s">"2026-09-15T19:00:00Z"</span>,
+    <span class="k">"spareTile"</span>: {
+      <span class="k">"entrances"</span>: [<span class="s">"UP"</span>, <span class="s">"RIGHT"</span>],
+      <span class="k">"treasure"</span>: <span class="nl">null</span>,
+      <span class="k">"bonus"</span>: <span class="nl">null</span>,
+      <span class="k">"isFixed"</span>: <span class="b">false</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- NEXT_TREASURE -->
+    <div class="opblock uni" id="evt-NEXT_TREASURE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-uni">UNICAST</span>
+        <span class="op-title">NEXT_TREASURE</span>
+        <span class="op-desc">Geheime Schatzkarte (nur an den jeweiligen Spieler!)</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note danger"><strong>GEHEIM:</strong> Wird ausschließlich per Unicast an den berechtigten Spieler gesendet. Andere Spieler sehen nur den Zähler <code>remainingTreasureCount</code> im State.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"NEXT_TREASURE"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"treasureId"</span>: <span class="n">4</span>,
+    <span class="k">"name"</span>: <span class="s">"Goldene Krone"</span>,
+    <span class="k">"remainingTreasureCount"</span>: <span class="n">5</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME_STATE_UPDATE -->
+    <div class="opblock recv" id="evt-GAME_STATE_UPDATE">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">GAME_STATE_UPDATE</span>
+        <span class="op-desc">Zentraler Full-State: Vollständiger Spielzustand nach jeder Aktion</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Der Client aktualisiert sein Board, Spielerpositionen und Rundenstatus anhand dieses Events. Verhindert Desynchronisation.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"GAME_STATE_UPDATE"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"board"</span>: {
+      <span class="k">"rows"</span>: <span class="n">7</span>,
+      <span class="k">"cols"</span>: <span class="n">7</span>,
+      <span class="k">"tiles"</span>: [
+        [
+          {
+            <span class="k">"entrances"</span>: [<span class="s">"RIGHT"</span>, <span class="s">"DOWN"</span>],
+            <span class="k">"treasure"</span>: <span class="nl">null</span>,
+            <span class="k">"bonus"</span>: <span class="nl">null</span>,
+            <span class="k">"isFixed"</span>: <span class="b">true</span>
+          },
+          {
+            <span class="k">"entrances"</span>: [<span class="s">"LEFT"</span>, <span class="s">"RIGHT"</span>],
+            <span class="k">"treasure"</span>: { <span class="k">"id"</span>: <span class="n">4</span>, <span class="k">"name"</span>: <span class="s">"Goldene Krone"</span> },
+            <span class="k">"bonus"</span>: <span class="s">"BEAM"</span>,
+            <span class="k">"isFixed"</span>: <span class="b">false</span>
+          }
+        ]
+      ],
+      <span class="k">"spareTile"</span>: {
+        <span class="k">"entrances"</span>: [<span class="s">"UP"</span>, <span class="s">"DOWN"</span>],
+        <span class="k">"treasure"</span>: <span class="nl">null</span>,
+        <span class="k">"bonus"</span>: <span class="nl">null</span>,
+        <span class="k">"isFixed"</span>: <span class="b">false</span>
+      },
+      <span class="k">"lastPush"</span>: { <span class="k">"rowOrColIndex"</span>: <span class="n">1</span>, <span class="k">"direction"</span>: <span class="s">"RIGHT"</span> }
+    },
+    <span class="k">"players"</span>: [
+      {
+        <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+        <span class="k">"username"</span>: <span class="s">"Alice"</span>,
+        <span class="k">"playerColor"</span>: <span class="s">"RED"</span>,
+        <span class="k">"currentPosition"</span>: { <span class="k">"row"</span>: <span class="n">1</span>, <span class="k">"column"</span>: <span class="n">1</span> },
+        <span class="k">"homePosition"</span>: { <span class="k">"row"</span>: <span class="n">0</span>, <span class="k">"column"</span>: <span class="n">0</span> },
+        <span class="k">"remainingTreasureCount"</span>: <span class="n">4</span>,
+        <span class="k">"availableBonuses"</span>: [<span class="s">"BEAM"</span>],
+        <span class="k">"isConnected"</span>: <span class="b">true</span>,
+        <span class="k">"isAiControlled"</span>: <span class="b">false</span>
+      }
+    ],
+    <span class="k">"currentTurnInfo"</span>: {
+      <span class="k">"activePlayerId"</span>: <span class="s">"p-101"</span>,
+      <span class="k">"turnState"</span>: <span class="s">"WAITING_FOR_MOVE"</span>,
+      <span class="k">"turnEndTime"</span>: <span class="s">"2026-09-15T18:02:30Z"</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- BONUS_SPAWNED -->
+    <div class="opblock recv" id="evt-BONUS_SPAWNED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">BONUS_SPAWNED</span>
+        <span class="op-desc">Neuer Bonus taucht zufällig auf einem Feld auf</span>
+        <div class="op-chips"><span class="chip chip-bonus">BONUS</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"BONUS_SPAWNED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"bonusId"</span>: <span class="s">"b-77"</span>,
+    <span class="k">"bonusType"</span>: <span class="s">"BEAM"</span>,
+    <span class="k">"position"</span>: { <span class="k">"row"</span>: <span class="n">3</span>, <span class="k">"column"</span>: <span class="n">5</span> }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- BONUS_COLLECTED -->
+    <div class="opblock recv" id="evt-BONUS_COLLECTED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">BONUS_COLLECTED</span>
+        <span class="op-desc">Spieler hat ein Bonusfeld betreten und den Bonus eingesammelt</span>
+        <div class="op-chips"><span class="chip chip-bonus">BONUS</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"BONUS_COLLECTED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"bonusId"</span>: <span class="s">"b-77"</span>,
+    <span class="k">"bonusType"</span>: <span class="s">"BEAM"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- BONUS_USED -->
+    <div class="opblock recv" id="evt-BONUS_USED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">BONUS_USED</span>
+        <span class="op-desc">Erfolgreicher Einsatz eines Bonus durch einen Spieler</span>
+        <div class="op-chips"><span class="chip chip-bonus">BONUS</span></div>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"BONUS_USED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"bonusType"</span>: <span class="s">"SWAP"</span>,
+    <span class="k">"details"</span>: {
+      <span class="k">"swappedWithPlayerId"</span>: <span class="s">"p-102"</span>
+    }
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TREASURE_FOUND -->
+    <div class="opblock recv" id="evt-TREASURE_FOUND">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">TREASURE_FOUND</span>
+        <span class="op-desc">Spieler hat sein aktuelles Schatzfeld erreicht</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"TREASURE_FOUND"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"treasureId"</span>: <span class="n">4</span>,
+    <span class="k">"treasureName"</span>: <span class="s">"Goldene Krone"</span>,
+    <span class="k">"pointsAwarded"</span>: <span class="n">20</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYER_UPDATED -->
+    <div class="opblock recv" id="evt-PLAYER_UPDATED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">PLAYER_UPDATED</span>
+        <span class="op-desc">Statusänderung (KI aktiviert/deaktiviert, Verbindungsstatus)</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"PLAYER_UPDATED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"isAiControlled"</span>: <span class="b">true</span>,
+    <span class="k">"isConnected"</span>: <span class="b">true</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACHIEVEMENT_UNLOCKED -->
+    <div class="opblock recv" id="evt-ACHIEVEMENT_UNLOCKED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">ACHIEVEMENT_UNLOCKED</span>
+        <span class="op-desc">Achievement freigeschaltet (Läufer, Schieber, Blocker, etc.)</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"ACHIEVEMENT_UNLOCKED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"achievement"</span>: <span class="s">"LAEUFER"</span>,
+    <span class="k">"description"</span>: <span class="s">"Meiste überquerte Felder in der Partie"</span>,
+    <span class="k">"points"</span>: <span class="n">15</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIMEOUT_WARNING -->
+    <div class="opblock recv" id="evt-TIMEOUT_WARNING">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">TIMEOUT_WARNING</span>
+        <span class="op-desc">30s Inaktivität überschritten: 3-Sekunden-Countdown vor Kick</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note danger">Laut Lastenheft: Nach 30s Nichtreagieren läuft ein Countdown von 3 Sekunden, bevor der Spieler entfernt wird.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"TIMEOUT_WARNING"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-102"</span>,
+    <span class="k">"countdownSeconds"</span>: <span class="n">3</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLAYER_DISCONNECTED -->
+    <div class="opblock recv" id="evt-PLAYER_DISCONNECTED">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">PLAYER_DISCONNECTED</span>
+        <span class="op-desc">Spieler hat die Partie verlassen oder wurde wegen Timeout gekickt</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"PLAYER_DISCONNECTED"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"playerId"</span>: <span class="s">"p-102"</span>,
+    <span class="k">"reason"</span>: <span class="s">"TIMEOUT"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- GAME_OVER -->
+    <div class="opblock recv" id="evt-GAME_OVER">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">GAME_OVER</span>
+        <span class="op-desc">Partie beendet: Endauswertung, Kennzahlen und Rangliste</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note">Beinhaltet die vom Lastenheft vorgeschriebenen Kennzahlen: Schritte, Gänge, Schätze, blockierte Wege und Achievements.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"GAME_OVER"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"reason"</span>: <span class="s">"HOME_REACHED_ALL_TREASURES"</span>,
+    <span class="k">"winnerPlayerId"</span>: <span class="s">"p-101"</span>,
+    <span class="k">"ranking"</span>: [
+      {
+        <span class="k">"rank"</span>: <span class="n">1</span>,
+        <span class="k">"playerId"</span>: <span class="s">"p-101"</span>,
+        <span class="k">"username"</span>: <span class="s">"Alice"</span>,
+        <span class="k">"totalScore"</span>: <span class="n">135</span>,
+        <span class="k">"stats"</span>: {
+          <span class="k">"stepsTaken"</span>: <span class="n">48</span>,
+          <span class="k">"tilesPushed"</span>: <span class="n">16</span>,
+          <span class="k">"treasuresCollected"</span>: <span class="n">6</span>,
+          <span class="k">"blockedPaths"</span>: <span class="n">8</span>,
+          <span class="k">"achievements"</span>: [<span class="s">"LAEUFER"</span>, <span class="s">"SCHIEBER"</span>]
+        }
+      }
+    ]
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- REMATCH_STATUS -->
+    <div class="opblock recv" id="evt-REMATCH_STATUS">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-recv">BROADCAST</span>
+        <span class="op-title">REMATCH_STATUS</span>
+        <span class="op-desc">Status der Revanche-Zusagen und Countdown zur Öffnung der Lobby</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"REMATCH_STATUS"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"readyPlayerIds"</span>: [<span class="s">"p-101"</span>],
+    <span class="k">"timeoutSecondsRemaining"</span>: <span class="n">10</span>,
+    <span class="k">"isOpenForNewPlayers"</span>: <span class="b">false</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ERROR -->
+    <div class="opblock err" id="evt-ERROR">
+      <div class="opblock-summary" onclick="toggleOp(this.parentElement)">
+        <span class="op-badge bg-err">FEHLER</span>
+        <span class="op-title">ERROR</span>
+        <span class="op-desc">Befehl abgewiesen oder Regelverstoß (Unicast an Verursacher)</span>
+        <span class="op-chevron">▶</span>
+      </div>
+      <div class="opblock-body">
+        <div class="body-note danger">Unicast nur an den betroffenen Client. Der Spielzustand am Server bleibt unverändert.</div>
+        <div class="code-container">
+          <button class="btn-copy" onclick="copyCode(this)">Kopieren</button>
+          <pre>{
+  <span class="k">"type"</span>: <span class="s">"ERROR"</span>,
+  <span class="k">"data"</span>: {
+    <span class="k">"errorCode"</span>: <span class="s">"INVALID_MOVE"</span>,
+    <span class="k">"message"</span>: <span class="s">"Zielfeld ist über offene Pfade nicht erreichbar."</span>,
+    <span class="k">"correlationType"</span>: <span class="s">"MOVE_FIGURE"</span>
+  }
+}</pre>
+        </div>
+      </div>
+    </div>
+
+  </div> <!-- /group-events -->
+
+
+  <!-- ==================== 4. ERROR CODES ==================== -->
+  <div class="controls-row" style="margin-top: 40px;" id="section-errors">
+    <div class="section-label">4. Standardisierte ErrorCodes</div>
+  </div>
+  <div style="background:#fff; border:1px solid var(--border-color); border-radius:6px; overflow:hidden; box-shadow:0 1px 3px rgba(0,0,0,0.03);">
+    <table class="param-table" style="margin:0;">
+      <thead>
+        <tr>
+          <th style="width:230px;">ErrorCode</th>
+          <th>Bedeutung / Auslöser</th>
+          <th>Typische Ursache</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><code class="p-name">GENERAL_ERROR</code></td><td>Unerwarteter Serverfehler</td><td>Server-Crash oder unhandled Exception</td></tr>
+        <tr><td><code class="p-name">INVALID_COMMAND</code></td><td>Ungültiges JSON oder Envelope defekt</td><td><code>"type"</code> oder <code>"data"</code> fehlt</td></tr>
+        <tr><td><code class="p-name">PLAYER_NOT_CONNECTED</code></td><td>Aktion vor <code>CONNECT_ACK</code></td><td>Befehl vor Authentifizierung gesendet</td></tr>
+        <tr><td><code class="p-name">NOT_YOUR_TURN</code></td><td>Aktion zur falschen Zeit</td><td>Spieler ist laut <code>activePlayerId</code> nicht am Zug</td></tr>
+        <tr><td><code class="p-name">INVALID_TURN_PHASE</code></td><td>Falsche Phase</td><td>Ziehen versucht, obwohl Schieben erwartet wird</td></tr>
+        <tr><td><code class="p-name">INVALID_PUSH</code></td><td>Unerlaubter Schiebevorgang</td><td>Gerade Reihe ohne Bonus gewählt oder Rückschiebe-Verbot missachtet</td></tr>
+        <tr><td><code class="p-name">INVALID_MOVE</code></td><td>Zielfeld unerreichbar</td><td>Kein offener Pfad zwischen Spielfigur und Ziel</td></tr>
+        <tr><td><code class="p-name">POSITION_OCCUPIED</code></td><td>Zielfeld belegt</td><td>Anderer Spieler steht bereits auf dem Feld</td></tr>
+        <tr><td><code class="p-name">REVERSING_PATH_FORBIDDEN</code></td><td>Rückwärtslaufen im selben Zug</td><td>Spieler kehrt auf dem Laufweg um</td></tr>
+        <tr><td><code class="p-name">BONUS_NOT_AVAILABLE</code></td><td>Bonus fehlt im Inventar</td><td>Bonus bereits verbraucht oder nie eingesammelt</td></tr>
+        <tr><td><code class="p-name">INVALID_BONUS_TARGET</code></td><td>Ungültiges Bonusziel</td><td>Beamen auf belegtes Feld oder Tauschen mit sich selbst</td></tr>
+        <tr><td><code class="p-name">LOBBY_FULL</code></td><td>Lobby voll</td><td>Bereits 4 Spieler in der Partie</td></tr>
+        <tr><td><code class="p-name">USERNAME_TAKEN</code></td><td>Namenskonflikt</td><td>Name in dieser Partie schon vergeben</td></tr>
+        <tr><td><code class="p-name">GAME_ALREADY_STARTED</code></td><td>Partie läuft bereits</td><td>Beitritt ohne gültiges <code>identifierToken</code> abgelehnt</td></tr>
+        <tr><td><code class="p-name">NOT_ADMIN</code></td><td>Rechte fehlen</td><td>Nicht-Admin versucht <code>START_GAME</code> aufzurufen</td></tr>
+        <tr><td><code class="p-name">NOT_ENOUGH_PLAYERS</code></td><td>Zu wenige Spieler</td><td><code>START_GAME</code> mit weniger als 2 Spielern aufgerufen</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- ==================== 5. DATENTYPEN & SCHEMAS ==================== -->
+  <div class="controls-row" style="margin-top: 40px;" id="section-schemas">
+    <div class="section-label">5. Datentypen & Enumerationen</div>
+  </div>
+  <div class="schema-grid">
+    <div class="schema-card">
+      <div class="schema-card-head">Direction</div>
+      <div class="schema-card-body">
+        <div class="enum-list">
+          <span class="enum-val">UP</span>
+          <span class="enum-val">DOWN</span>
+          <span class="enum-val">LEFT</span>
+          <span class="enum-val">RIGHT</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-card-head">PlayerColor</div>
+      <div class="schema-card-body">
+        <div class="enum-list">
+          <span class="enum-val" style="color:#dc2626;font-weight:700;">RED</span>
+          <span class="enum-val" style="color:#2563eb;font-weight:700;">BLUE</span>
+          <span class="enum-val" style="color:#16a34a;font-weight:700;">GREEN</span>
+          <span class="enum-val" style="color:#ca8a04;font-weight:700;">YELLOW</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-card-head">TurnState</div>
+      <div class="schema-card-body">
+        <div class="enum-list">
+          <span class="enum-val">WAITING_FOR_PUSH</span>
+          <span class="enum-val">WAITING_FOR_MOVE</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-card-head">BonusType</div>
+      <div class="schema-card-body">
+        <div class="enum-list">
+          <span class="enum-val">BEAM</span>
+          <span class="enum-val">SWAP</span>
+          <span class="enum-val">PUSH_FIXED</span>
+          <span class="enum-val">PUSH_TWICE</span>
+        </div>
+      </div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-card-head">Coordinates</div>
+      <div class="schema-card-body">
+        <div><code>row</code>: integer (0 bis rows-1)</div>
+        <div><code>column</code>: integer (0 bis cols-1)</div>
+      </div>
+    </div>
+    <div class="schema-card">
+      <div class="schema-card-head">Tile (Eingänge-Prinzip)</div>
+      <div class="schema-card-body">
+        <div><code>entrances</code>: Direction[] (z.B. ["UP","RIGHT"])</div>
+        <div><code>treasure</code>: Treasure | null</div>
+        <div><code>bonus</code>: BonusType | null</div>
+        <div><code>isFixed</code>: boolean</div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // Mobile Sidebar Toggle
+  function toggleMobileSidebar() {
+    const sb = document.getElementById('sidebar');
+    sb.classList.toggle('mobile-open');
+  }
+  function closeMobileNav() {
+    const sb = document.getElementById('sidebar');
+    if (sb.classList.contains('mobile-open')) {
+      sb.classList.remove('mobile-open');
+    }
+  }
+
+  // Accordion Toggle
+  function toggleOp(el) {
+    el.classList.toggle('open');
+  }
+
+  // Toggle All in a Group
+  function toggleAll(groupId) {
+    const container = document.getElementById(groupId);
+    if (!container) return;
+    const blocks = container.querySelectorAll('.opblock');
+    const anyOpen = Array.from(blocks).some(b => b.classList.contains('open'));
+    blocks.forEach(b => {
+      if (anyOpen) b.classList.remove('open');
+      else b.classList.add('open');
+    });
+  }
+
+  // Copy Code Functionality
+  function copyCode(btn) {
+    const pre = btn.nextElementSibling;
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      const orig = btn.innerText;
+      btn.innerText = 'Kopiert! ✔';
+      setTimeout(() => btn.innerText = orig, 1500);
+    });
+  }
+
+  // Sidebar Filter
+  function filterOps() {
+    const query = document.getElementById('filterInput').value.toLowerCase();
+    const blocks = document.querySelectorAll('.opblock');
+    blocks.forEach(block => {
+      const text = block.innerText.toLowerCase();
+      if (text.includes(query)) {
+        block.style.display = 'block';
+      } else {
+        block.style.display = 'none';
+      }
+    });
+  }
+
+  // Active Link on Scroll
+  window.addEventListener('scroll', () => {
+    const fromTop = window.scrollY + 120;
+    const links = document.querySelectorAll('.sidebar-nav a');
+    links.forEach(link => {
+      const href = link.getAttribute('href');
+      if (href && href.startsWith('#')) {
+        const targetId = href.substring(1);
+        const section = document.getElementById(targetId);
+        if (section && section.offsetTop <= fromTop && (section.offsetTop + section.offsetHeight) > fromTop) {
+          links.forEach(l => l.classList.remove('active'));
+          link.classList.add('active');
+        }
+      }
+    });
+  });
+</script>
+</body>
+</html>
+
